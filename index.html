@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Trading Dashboard - BTC & ETH</title>
+    <title>Crypto Trading Dashboard - Top 100</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -25,167 +25,104 @@
         .pulse-glow {
             animation: pulse-glow 2s ease-in-out infinite;
         }
+        .crypto-row:hover {
+            background: rgba(59, 130, 246, 0.1);
+            cursor: pointer;
+        }
+        #loading {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="text-white p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
         <div class="mb-8">
             <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-                📊 Crypto Trading Dashboard
+                📊 Crypto Dashboard - Top 100
             </h1>
-            <p class="text-gray-400">Tableau de bord éducatif pour Bitcoin & Ethereum</p>
+            <p class="text-gray-400">Prix en temps réel et analyse technique pour les 100 principales cryptomonnaies</p>
             <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <p class="text-sm text-yellow-200">
-                    ⚠️ <strong>Mode Éducatif:</strong> Cette application est à but pédagogique uniquement.
-                    Elle ne permet pas de vraies transactions. Données en temps réel via APIs publiques.
+                    ⚠️ <strong>Mode Éducatif:</strong> Application pédagogique uniquement. Aucune transaction réelle possible.
                 </p>
             </div>
         </div>
 
-        <!-- Price Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- Bitcoin Card -->
-            <div class="card rounded-2xl p-6 hover:shadow-2xl transition-all">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="card rounded-2xl p-6 lg:col-span-2">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-2xl">
-                            ₿
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold">Bitcoin</h2>
-                            <p class="text-gray-400 text-sm">BTC/USDT</p>
-                        </div>
-                    </div>
-                    <span id="btc-status" class="pulse-glow">🔴</span>
+                    <h2 class="text-2xl font-bold">Crypto sélectionnée</h2>
+                    <span id="selected-status" class="pulse-glow">🔴</span>
                 </div>
+
                 <div class="mb-4">
-                    <p class="text-4xl font-bold" id="btc-price">$--,---</p>
-                    <p class="text-sm mt-1" id="btc-change">
-                        <span id="btc-change-value">+0.00%</span> (24h)
-                    </p>
+                    <label class="block text-sm text-gray-400 mb-2">Choisir une crypto</label>
+                    <select id="crypto-select" onchange="changeCrypto()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-400">
+                        <option value="">Chargement...</option>
+                    </select>
                 </div>
-                <div class="grid grid-cols-3 gap-4 text-sm">
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <p class="text-gray-400">High 24h</p>
-                        <p class="font-semibold" id="btc-high">$--</p>
+                        <p class="text-gray-400 text-sm">Prix actuel</p>
+                        <p class="text-3xl font-bold" id="selected-price">$--</p>
                     </div>
                     <div>
-                        <p class="text-gray-400">Low 24h</p>
-                        <p class="font-semibold" id="btc-low">$--</p>
+                        <p class="text-gray-400 text-sm">Variation 24h</p>
+                        <p class="text-2xl font-bold" id="selected-change">--</p>
                     </div>
-                    <div>
-                        <p class="text-gray-400">Volume</p>
-                        <p class="font-semibold" id="btc-volume">--</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="p-3 bg-slate-700/30 rounded-lg">
+                        <p class="text-gray-400 text-xs">High 24h</p>
+                        <p class="font-semibold" id="selected-high">$--</p>
+                    </div>
+                    <div class="p-3 bg-slate-700/30 rounded-lg">
+                        <p class="text-gray-400 text-xs">Low 24h</p>
+                        <p class="font-semibold" id="selected-low">$--</p>
+                    </div>
+                    <div class="p-3 bg-slate-700/30 rounded-lg">
+                        <p class="text-gray-400 text-xs">Volume 24h</p>
+                        <p class="font-semibold" id="selected-volume">--</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Ethereum Card -->
-            <div class="card rounded-2xl p-6 hover:shadow-2xl transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-2xl">
-                            Ξ
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold">Ethereum</h2>
-                            <p class="text-gray-400 text-sm">ETH/USDT</p>
-                        </div>
+            <div class="card rounded-2xl p-6">
+                <h3 class="text-xl font-bold mb-4">🔬 Indicateurs Techniques</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+                        <span class="text-gray-300 text-sm">RSI (14)</span>
+                        <span class="font-bold" id="selected-rsi">--</span>
                     </div>
-                    <span id="eth-status" class="pulse-glow">🔴</span>
-                </div>
-                <div class="mb-4">
-                    <p class="text-4xl font-bold" id="eth-price">$--,---</p>
-                    <p class="text-sm mt-1" id="eth-change">
-                        <span id="eth-change-value">+0.00%</span> (24h)
-                    </p>
-                </div>
-                <div class="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                        <p class="text-gray-400">High 24h</p>
-                        <p class="font-semibold" id="eth-high">$--</p>
+                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+                        <span class="text-gray-300 text-sm">EMA 20</span>
+                        <span class="font-bold" id="selected-ema20">$--</span>
                     </div>
-                    <div>
-                        <p class="text-gray-400">Low 24h</p>
-                        <p class="font-semibold" id="eth-low">$--</p>
+                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+                        <span class="text-gray-300 text-sm">EMA 50</span>
+                        <span class="font-bold" id="selected-ema50">$--</span>
                     </div>
-                    <div>
-                        <p class="text-gray-400">Volume</p>
-                        <p class="font-semibold" id="eth-volume">--</p>
+                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+                        <span class="text-gray-300 text-sm">Signal</span>
+                        <span class="font-bold" id="selected-signal">--</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- BTC Chart -->
-            <div class="card rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4">📈 Bitcoin - Prix (1h)</h3>
-                <canvas id="btcChart"></canvas>
-            </div>
-
-            <!-- ETH Chart -->
-            <div class="card rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4">📈 Ethereum - Prix (1h)</h3>
-                <canvas id="ethChart"></canvas>
-            </div>
+        <div class="card rounded-2xl p-6 mb-8">
+            <h3 class="text-xl font-bold mb-4">📈 Graphique de Prix</h3>
+            <canvas id="priceChart"></canvas>
         </div>
 
-        <!-- Technical Indicators -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- BTC Indicators -->
-            <div class="card rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4">🔬 Indicateurs Techniques - BTC</h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">RSI (14)</span>
-                        <span class="font-bold" id="btc-rsi">--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">EMA 20</span>
-                        <span class="font-bold" id="btc-ema20">$--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">EMA 50</span>
-                        <span class="font-bold" id="btc-ema50">$--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">Signal</span>
-                        <span class="font-bold" id="btc-signal">--</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ETH Indicators -->
-            <div class="card rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4">🔬 Indicateurs Techniques - ETH</h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">RSI (14)</span>
-                        <span class="font-bold" id="eth-rsi">--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">EMA 20</span>
-                        <span class="font-bold" id="eth-ema20">$--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">EMA 50</span>
-                        <span class="font-bold" id="eth-ema50">$--</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300">Signal</span>
-                        <span class="font-bold" id="eth-signal">--</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Simulation Trading -->
         <div class="card rounded-2xl p-6 mb-8">
             <h3 class="text-xl font-bold mb-4">🎮 Simulateur de Trading</h3>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                     <p class="text-sm text-gray-400 mb-1">Capital Virtuel</p>
@@ -196,57 +133,70 @@
                     <p class="text-2xl font-bold" id="sim-pnl">$0.00</p>
                 </div>
                 <div class="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Positions Ouvertes</p>
+                    <p class="text-sm text-gray-400 mb-1">Positions</p>
                     <p class="text-2xl font-bold" id="sim-positions">0</p>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm text-gray-400 mb-2">Crypto</label>
-                    <select id="sim-crypto" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-400">
-                        <option value="btc">Bitcoin (BTC)</option>
-                        <option value="eth">Ethereum (ETH)</option>
-                    </select>
-                </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-2">Montant ($)</label>
                     <input type="number" id="sim-amount" value="100" min="1" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-400">
                 </div>
+                <div class="flex gap-2">
+                    <button onclick="simulateBuy()" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all">
+                        🟢 Acheter
+                    </button>
+                    <button onclick="simulateSell()" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-all">
+                        🔴 Vendre
+                    </button>
+                </div>
             </div>
-
-            <div class="flex gap-4 mt-4">
-                <button onclick="simulateBuy()" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all">
-                    🟢 Acheter (Simulation)
-                </button>
-                <button onclick="simulateSell()" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-all">
-                    🔴 Vendre (Simulation)
-                </button>
-            </div>
-
             <div id="sim-trades" class="mt-6 space-y-2">
-                <p class="text-sm text-gray-400">Aucune transaction simulée</p>
+                <p class="text-sm text-gray-400">Aucune transaction</p>
             </div>
         </div>
 
-        <!-- Footer Info -->
         <div class="card rounded-2xl p-6">
-            <h3 class="text-lg font-bold mb-4">ℹ️ Informations</h3>
-            <div class="space-y-2 text-sm text-gray-300">
-                <p>✅ <strong>Source des données:</strong> API publique Binance (temps réel)</p>
-                <p>✅ <strong>Sécurité:</strong> Aucune donnée personnelle collectée, pas de connexion wallet</p>
-                <p>✅ <strong>Mode:</strong> Simulation uniquement - Aucune vraie transaction possible</p>
-                <p>⚠️ <strong>Avertissement:</strong> Le trading de crypto-monnaies comporte des risques élevés</p>
-                <p>📚 <strong>Usage:</strong> Éducatif - Pour apprendre l'analyse technique</p>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold">💰 Top 100 Cryptomonnaies</h3>
+                <div class="flex gap-2 items-center">
+                    <input type="text" id="search-crypto" placeholder="Rechercher..." onkeyup="filterCryptos()" class="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-400">
+                    <button onclick="refreshMarket()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-all">
+                        <span id="refresh-icon">🔄</span>
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="border-b border-slate-700">
+                        <tr class="text-left text-gray-400">
+                            <th class="pb-3 pr-4">#</th>
+                            <th class="pb-3 pr-4">Nom</th>
+                            <th class="pb-3 pr-4 text-right">Prix</th>
+                            <th class="pb-3 pr-4 text-right">24h %</th>
+                            <th class="pb-3 text-right">Volume 24h</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crypto-table">
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-gray-500">
+                                <div id="loading" class="inline-block text-4xl">⏳</div>
+                                <p class="mt-2">Chargement des données...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script>
-        // État de l'application
         const state = {
-            btc: { price: 0, priceHistory: [], ws: null },
-            eth: { price: 0, priceHistory: [], ws: null },
+            cryptoList: [],
+            selected: null,
+            selectedSymbol: '',
+            priceHistory: [],
+            ws: null,
             simulation: {
                 balance: 10000,
                 initialBalance: 10000,
@@ -255,22 +205,22 @@
             }
         };
 
-        let btcChart, ethChart;
+        let priceChart = null;
 
-        // Initialisation des graphiques
-        function initCharts() {
-            const chartConfig = (label, color) => ({
+        function initChart() {
+            const ctx = document.getElementById('priceChart');
+            priceChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: [],
                     datasets: [{
-                        label: label,
+                        label: 'Prix',
                         data: [],
-                        borderColor: color,
-                        backgroundColor: color + '20',
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f620',
                         tension: 0.4,
                         fill: true,
-                        pointRadius: 0
+                        pointRadius: 2
                     }]
                 },
                 options: {
@@ -281,8 +231,8 @@
                     },
                     scales: {
                         x: {
-                            display: false,
-                            grid: { display: false }
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
                         },
                         y: {
                             ticks: { color: '#94a3b8' },
@@ -291,95 +241,168 @@
                     }
                 }
             });
-
-            btcChart = new Chart(document.getElementById('btcChart'), chartConfig('BTC Price', '#f97316'));
-            ethChart = new Chart(document.getElementById('ethChart'), chartConfig('ETH Price', '#3b82f6'));
         }
 
-        // Connexion WebSocket pour les prix en temps réel
-        function connectWebSocket(symbol, crypto) {
-            const wsUrl = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@ticker`;
-            const ws = new WebSocket(wsUrl);
+        async function loadCryptoList() {
+            try {
+                const response = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+                const data = await response.json();
 
-            ws.onopen = () => {
-                console.log(`✅ Connecté à ${symbol}`);
-                document.getElementById(`${crypto}-status`).textContent = '🟢';
+                state.cryptoList = data
+                    .filter(item => item.symbol.endsWith('USDT'))
+                    .map(item => ({
+                        symbol: item.symbol,
+                        name: item.symbol.replace('USDT', ''),
+                        price: parseFloat(item.lastPrice),
+                        change: parseFloat(item.priceChangePercent),
+                        volume: parseFloat(item.quoteVolume),
+                        high: parseFloat(item.highPrice),
+                        low: parseFloat(item.lowPrice)
+                    }))
+                    .sort((a, b) => b.volume - a.volume)
+                    .slice(0, 100);
+
+                updateCryptoSelect();
+                updateCryptoTable();
+
+                if (state.cryptoList.length > 0) {
+                    document.getElementById('crypto-select').value = state.cryptoList[0].symbol;
+                    changeCrypto();
+                }
+            } catch (error) {
+                console.error('Erreur chargement:', error);
+                document.getElementById('crypto-table').innerHTML = `
+                    <tr><td colspan="5" class="py-8 text-center text-red-400">
+                        ❌ Erreur de chargement. <button onclick="loadCryptoList()" class="underline">Réessayer</button>
+                    </td></tr>`;
+            }
+        }
+
+        function updateCryptoSelect() {
+            const select = document.getElementById('crypto-select');
+            select.innerHTML = state.cryptoList.map(c =>
+                `<option value="${c.symbol}">${c.name} - $${c.price.toFixed(c.price < 1 ? 6 : 2)}</option>`
+            ).join('');
+        }
+
+        function updateCryptoTable() {
+            const tbody = document.getElementById('crypto-table');
+            tbody.innerHTML = state.cryptoList.map((c, i) => {
+                const changeClass = c.change >= 0 ? 'price-up' : 'price-down';
+                const changeIcon = c.change >= 0 ? '▲' : '▼';
+                return `
+                    <tr class="crypto-row border-b border-slate-800" onclick="selectCrypto('${c.symbol}')">
+                        <td class="py-3 pr-4 text-gray-400">${i + 1}</td>
+                        <td class="py-3 pr-4 font-semibold">${c.name}</td>
+                        <td class="py-3 pr-4 text-right">$${c.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: c.price < 1 ? 6 : 2 })}</td>
+                        <td class="py-3 pr-4 text-right ${changeClass} font-semibold">${changeIcon} ${Math.abs(c.change).toFixed(2)}%</td>
+                        <td class="py-3 text-right text-gray-400">$${(c.volume / 1000000).toFixed(2)}M</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function selectCrypto(symbol) {
+            document.getElementById('crypto-select').value = symbol;
+            changeCrypto();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function changeCrypto() {
+            const symbol = document.getElementById('crypto-select').value;
+            if (!symbol) return;
+
+            state.selectedSymbol = symbol;
+            state.selected = state.cryptoList.find(c => c.symbol === symbol);
+            state.priceHistory = [];
+
+            if (state.ws) {
+                state.ws.close();
+            }
+
+            updateSelectedDisplay();
+            connectWebSocket();
+        }
+
+        function updateSelectedDisplay() {
+            if (!state.selected) return;
+
+            document.getElementById('selected-price').textContent = `$${state.selected.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: state.selected.price < 1 ? 6 : 2 })}`;
+
+            const changeEl = document.getElementById('selected-change');
+            changeEl.textContent = `${state.selected.change >= 0 ? '+' : ''}${state.selected.change.toFixed(2)}%`;
+            changeEl.className = state.selected.change >= 0 ? 'text-2xl font-bold price-up' : 'text-2xl font-bold price-down';
+
+            document.getElementById('selected-high').textContent = `$${state.selected.high.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+            document.getElementById('selected-low').textContent = `$${state.selected.low.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+            document.getElementById('selected-volume').textContent = `$${(state.selected.volume / 1000000).toFixed(2)}M`;
+        }
+
+        function connectWebSocket() {
+            const symbol = state.selectedSymbol.toLowerCase();
+            const wsUrl = `wss://stream.binance.com:9443/ws/${symbol}@ticker`;
+
+            state.ws = new WebSocket(wsUrl);
+
+            state.ws.onopen = () => {
+                console.log(`✅ Connecté à ${state.selectedSymbol}`);
+                document.getElementById('selected-status').textContent = '🟢';
             };
 
-            ws.onmessage = (event) => {
+            state.ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                updatePriceData(crypto, data);
+                updatePriceData(data);
             };
 
-            ws.onerror = (error) => {
-                console.error(`❌ Erreur ${symbol}:`, error);
-                document.getElementById(`${crypto}-status`).textContent = '🔴';
+            state.ws.onerror = () => {
+                document.getElementById('selected-status').textContent = '🔴';
             };
 
-            ws.onclose = () => {
-                console.log(`🔌 Déconnecté ${symbol}, reconnexion dans 5s...`);
-                document.getElementById(`${crypto}-status`).textContent = '🟡';
-                setTimeout(() => connectWebSocket(symbol, crypto), 5000);
+            state.ws.onclose = () => {
+                document.getElementById('selected-status').textContent = '🟡';
             };
-
-            state[crypto].ws = ws;
         }
 
-        // Mise à jour des données de prix
-        function updatePriceData(crypto, data) {
+        function updatePriceData(data) {
             const price = parseFloat(data.c);
             const change = parseFloat(data.P);
             const high = parseFloat(data.h);
             const low = parseFloat(data.l);
-            const volume = parseFloat(data.v);
+            const volume = parseFloat(data.q);
 
-            state[crypto].price = price;
-            state[crypto].priceHistory.push(price);
-
-            // Garder seulement les 60 derniers points (1h à 1min d'intervalle)
-            if (state[crypto].priceHistory.length > 60) {
-                state[crypto].priceHistory.shift();
+            state.priceHistory.push(price);
+            if (state.priceHistory.length > 60) {
+                state.priceHistory.shift();
             }
 
-            // Mise à jour de l'affichage
-            document.getElementById(`${crypto}-price`).textContent = `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('selected-price').textContent = `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 6 : 2 })}`;
 
-            const changeEl = document.getElementById(`${crypto}-change-value`);
+            const changeEl = document.getElementById('selected-change');
             changeEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-            changeEl.className = change >= 0 ? 'price-up' : 'price-down';
+            changeEl.className = change >= 0 ? 'text-2xl font-bold price-up' : 'text-2xl font-bold price-down';
 
-            document.getElementById(`${crypto}-high`).textContent = `$${high.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
-            document.getElementById(`${crypto}-low`).textContent = `$${low.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
-            document.getElementById(`${crypto}-volume`).textContent = volume > 1000000
-                ? `${(volume / 1000000).toFixed(2)}M`
-                : `${(volume / 1000).toFixed(2)}K`;
+            document.getElementById('selected-high').textContent = `$${high.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+            document.getElementById('selected-low').textContent = `$${low.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+            document.getElementById('selected-volume').textContent = `$${(volume / 1000000).toFixed(2)}M`;
 
-            // Mise à jour du graphique
-            updateChart(crypto);
-
-            // Calcul des indicateurs techniques
-            calculateIndicators(crypto);
+            updateChart();
+            calculateIndicators();
         }
 
-        // Mise à jour des graphiques
-        function updateChart(crypto) {
-            const chart = crypto === 'btc' ? btcChart : ethChart;
-            const history = state[crypto].priceHistory;
+        function updateChart() {
+            if (!priceChart || state.priceHistory.length === 0) return;
 
-            if (history.length === 0) return;
-
-            const labels = history.map((_, i) => {
+            const labels = state.priceHistory.map((_, i) => {
                 const now = new Date();
-                const time = new Date(now.getTime() - (history.length - i - 1) * 60000);
+                const time = new Date(now.getTime() - (state.priceHistory.length - i - 1) * 60000);
                 return time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             });
 
-            chart.data.labels = labels;
-            chart.data.datasets[0].data = history;
-            chart.update('none');
+            priceChart.data.labels = labels;
+            priceChart.data.datasets[0].data = state.priceHistory;
+            priceChart.update('none');
         }
 
-        // Calcul du RSI
         function calculateRSI(prices, period = 14) {
             if (prices.length < period + 1) return 50;
 
@@ -398,7 +421,6 @@
             return 100 - (100 / (1 + rs));
         }
 
-        // Calcul de l'EMA
         function calculateEMA(prices, period) {
             if (prices.length < period) return prices[prices.length - 1] || 0;
 
@@ -412,17 +434,15 @@
             return ema;
         }
 
-        // Calcul des indicateurs techniques
-        function calculateIndicators(crypto) {
-            const prices = state[crypto].priceHistory;
+        function calculateIndicators() {
+            const prices = state.priceHistory;
             if (prices.length < 20) return;
 
             const rsi = calculateRSI(prices, 14);
             const ema20 = calculateEMA(prices, 20);
             const ema50 = calculateEMA(prices, 50);
 
-            // Mise à jour de l'affichage
-            const rsiEl = document.getElementById(`${crypto}-rsi`);
+            const rsiEl = document.getElementById('selected-rsi');
             rsiEl.textContent = rsi.toFixed(2);
 
             if (rsi < 30) {
@@ -433,10 +453,9 @@
                 rsiEl.className = 'font-bold text-yellow-400';
             }
 
-            document.getElementById(`${crypto}-ema20`).textContent = `$${ema20.toFixed(2)}`;
-            document.getElementById(`${crypto}-ema50`).textContent = `$${ema50.toFixed(2)}`;
+            document.getElementById('selected-ema20').textContent = `$${ema20.toFixed(2)}`;
+            document.getElementById('selected-ema50').textContent = `$${ema50.toFixed(2)}`;
 
-            // Signal de trading
             const currentPrice = prices[prices.length - 1];
             let signal = 'NEUTRE 🟡';
 
@@ -446,22 +465,25 @@
                 signal = 'VENTE 🔴';
             }
 
-            document.getElementById(`${crypto}-signal`).textContent = signal;
+            document.getElementById('selected-signal').textContent = signal;
         }
 
-        // Simulation d'achat
         function simulateBuy() {
-            const crypto = document.getElementById('sim-crypto').value;
+            if (!state.selected || state.priceHistory.length === 0) {
+                alert('❌ Sélectionnez une crypto');
+                return;
+            }
+
             const amount = parseFloat(document.getElementById('sim-amount').value);
-            const price = state[crypto].price;
+            const price = state.priceHistory[state.priceHistory.length - 1];
 
             if (amount > state.simulation.balance) {
-                alert('❌ Solde insuffisant !');
+                alert('❌ Solde insuffisant');
                 return;
             }
 
             if (amount <= 0 || price <= 0) {
-                alert('❌ Montant invalide !');
+                alert('❌ Montant invalide');
                 return;
             }
 
@@ -469,8 +491,8 @@
             state.simulation.balance -= amount;
 
             state.simulation.positions.push({
-                crypto: crypto.toUpperCase(),
-                type: 'buy',
+                crypto: state.selected.name,
+                symbol: state.selectedSymbol,
                 price: price,
                 amount: amount,
                 quantity: quantity,
@@ -479,7 +501,7 @@
 
             state.simulation.trades.unshift({
                 type: 'buy',
-                crypto: crypto.toUpperCase(),
+                crypto: state.selected.name,
                 price: price,
                 amount: amount,
                 quantity: quantity,
@@ -487,37 +509,38 @@
             });
 
             updateSimulationUI();
-            alert(`✅ Achat simulé: ${quantity.toFixed(8)} ${crypto.toUpperCase()} à $${price.toFixed(2)}`);
+            alert(`✅ Achat: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
         }
 
-        // Simulation de vente
         function simulateSell() {
-            const crypto = document.getElementById('sim-crypto').value;
-            const amount = parseFloat(document.getElementById('sim-amount').value);
-            const price = state[crypto].price;
+            if (!state.selected || state.priceHistory.length === 0) {
+                alert('❌ Sélectionnez une crypto');
+                return;
+            }
 
-            // Trouver les positions correspondantes
-            const positions = state.simulation.positions.filter(p => p.crypto === crypto.toUpperCase());
+            const amount = parseFloat(document.getElementById('sim-amount').value);
+            const price = state.priceHistory[state.priceHistory.length - 1];
+
+            const positions = state.simulation.positions.filter(p => p.symbol === state.selectedSymbol);
 
             if (positions.length === 0) {
-                alert('❌ Aucune position ouverte pour ' + crypto.toUpperCase());
+                alert('❌ Aucune position pour ' + state.selected.name);
                 return;
             }
 
             const totalValue = positions.reduce((sum, p) => sum + (p.quantity * price), 0);
 
             if (amount > totalValue) {
-                alert('❌ Montant supérieur à vos positions !');
+                alert('❌ Montant supérieur aux positions');
                 return;
             }
 
             const quantity = amount / price;
             state.simulation.balance += amount;
 
-            // Retirer les positions
             let remainingQty = quantity;
             state.simulation.positions = state.simulation.positions.filter(p => {
-                if (p.crypto === crypto.toUpperCase() && remainingQty > 0) {
+                if (p.symbol === state.selectedSymbol && remainingQty > 0) {
                     if (p.quantity <= remainingQty) {
                         remainingQty -= p.quantity;
                         return false;
@@ -532,7 +555,7 @@
 
             state.simulation.trades.unshift({
                 type: 'sell',
-                crypto: crypto.toUpperCase(),
+                crypto: state.selected.name,
                 price: price,
                 amount: amount,
                 quantity: quantity,
@@ -540,10 +563,9 @@
             });
 
             updateSimulationUI();
-            alert(`✅ Vente simulée: ${quantity.toFixed(8)} ${crypto.toUpperCase()} à $${price.toFixed(2)}`);
+            alert(`✅ Vente: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
         }
 
-        // Mise à jour de l'interface de simulation
         function updateSimulationUI() {
             document.getElementById('sim-balance').textContent = state.simulation.balance.toFixed(2);
             document.getElementById('sim-positions').textContent = state.simulation.positions.length;
@@ -553,10 +575,9 @@
             pnlEl.textContent = `$${pnl.toFixed(2)}`;
             pnlEl.className = pnl >= 0 ? 'text-2xl font-bold text-green-400' : 'text-2xl font-bold text-red-400';
 
-            // Afficher les trades
             const tradesEl = document.getElementById('sim-trades');
             if (state.simulation.trades.length === 0) {
-                tradesEl.innerHTML = '<p class="text-sm text-gray-400">Aucune transaction simulée</p>';
+                tradesEl.innerHTML = '<p class="text-sm text-gray-400">Aucune transaction</p>';
             } else {
                 tradesEl.innerHTML = state.simulation.trades.slice(0, 10).map(t => `
                     <div class="p-3 bg-slate-700/30 rounded-lg flex justify-between items-center">
@@ -575,21 +596,32 @@
             }
         }
 
-        // Initialisation au chargement de la page
+        function filterCryptos() {
+            const search = document.getElementById('search-crypto').value.toLowerCase();
+            const rows = document.querySelectorAll('.crypto-row');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        function refreshMarket() {
+            const icon = document.getElementById('refresh-icon');
+            icon.style.animation = 'spin 1s linear infinite';
+            loadCryptoList().then(() => {
+                icon.style.animation = '';
+            });
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Crypto Trading Dashboard - Initialisé');
-
-            initCharts();
-            connectWebSocket('BTCUSDT', 'btc');
-            connectWebSocket('ETHUSDT', 'eth');
-
-            console.log('✅ Connexion aux flux de prix en temps réel...');
+            console.log('🚀 Crypto Dashboard - Top 100');
+            initChart();
+            loadCryptoList();
         });
 
-        // Nettoyage à la fermeture
         window.addEventListener('beforeunload', () => {
-            if (state.btc.ws) state.btc.ws.close();
-            if (state.eth.ws) state.eth.ws.close();
+            if (state.ws) state.ws.close();
         });
     </script>
 </body>
