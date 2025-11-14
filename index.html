@@ -6,7 +6,6 @@
     <title>Crypto Trading Dashboard - Top 100</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
@@ -42,50 +41,14 @@
 <body class="text-white p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         <div class="mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                <div>
-                    <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-                        📊 Crypto Dashboard - Top 100
-                    </h1>
-                    <p class="text-gray-400">Prix en temps réel et analyse technique pour les 100 principales cryptomonnaies</p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="connectMetaMask()" id="metamask-btn" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 rounded-lg font-semibold transition-all flex items-center gap-2">
-                        <span>🦊</span>
-                        <span id="metamask-text">MetaMask</span>
-                    </button>
-                    <button onclick="connectCoinbase()" id="coinbase-btn" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg font-semibold transition-all flex items-center gap-2">
-                        <span>💼</span>
-                        <span id="coinbase-text">Coinbase</span>
-                    </button>
-                </div>
-            </div>
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+                📊 Crypto Dashboard - Top 100
+            </h1>
+            <p class="text-gray-400">Prix en temps réel et analyse technique pour les 100 principales cryptomonnaies</p>
             <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <p class="text-sm text-yellow-200">
-                    ⚠️ <strong>Mode Éducatif:</strong> Application pédagogique uniquement. Connexion wallet pour voir vos soldes uniquement.
+                    ⚠️ <strong>Mode Éducatif:</strong> Application pédagogique uniquement. Aucune transaction réelle possible.
                 </p>
-            </div>
-        </div>
-
-        <div id="wallet-info" class="card rounded-2xl p-6 mb-8 hidden">
-            <h3 class="text-xl font-bold mb-4">👛 Informations Wallet</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Type</p>
-                    <p class="text-lg font-bold" id="wallet-type">--</p>
-                </div>
-                <div class="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Adresse</p>
-                    <p class="text-sm font-mono" id="wallet-address">--</p>
-                </div>
-                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Réseau</p>
-                    <p class="text-lg font-bold" id="wallet-network">--</p>
-                </div>
-                <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Solde</p>
-                    <p class="text-lg font-bold" id="wallet-balance">--</p>
-                </div>
             </div>
         </div>
 
@@ -239,152 +202,10 @@
                 initialBalance: 10000,
                 positions: [],
                 trades: []
-            },
-            wallet: {
-                connected: false,
-                address: null,
-                balance: '0',
-                chainId: null,
-                provider: null,
-                signer: null,
-                type: null
             }
         };
 
         let priceChart = null;
-
-        const NETWORKS = {
-            '0x1': 'Ethereum Mainnet',
-            '0x38': 'BSC Mainnet',
-            '0x89': 'Polygon',
-            '0xa86a': 'Avalanche',
-            '0xfa': 'Fantom'
-        };
-
-        async function connectMetaMask() {
-            if (!window.ethereum) {
-                alert('❌ MetaMask non détecté. Installez MetaMask pour continuer.');
-                window.open('https://metamask.io/download/', '_blank');
-                return;
-            }
-
-            try {
-                const accounts = await window.ethereum.request({
-                    method: 'eth_requestAccounts'
-                });
-
-                state.wallet.provider = new ethers.providers.Web3Provider(window.ethereum);
-                state.wallet.signer = state.wallet.provider.getSigner();
-                state.wallet.address = accounts[0];
-                state.wallet.connected = true;
-                state.wallet.type = 'MetaMask';
-
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                state.wallet.chainId = chainId;
-
-                const balance = await state.wallet.provider.getBalance(state.wallet.address);
-                state.wallet.balance = ethers.utils.formatEther(balance);
-
-                updateWalletDisplay();
-
-                document.getElementById('metamask-btn').className = 'px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all flex items-center gap-2';
-                document.getElementById('metamask-text').textContent = `${state.wallet.address.slice(0, 6)}...${state.wallet.address.slice(-4)}`;
-
-                console.log('✅ MetaMask connecté:', state.wallet.address);
-
-                window.ethereum.on('accountsChanged', handleAccountsChanged);
-                window.ethereum.on('chainChanged', handleChainChanged);
-
-            } catch (error) {
-                console.error('❌ Erreur connexion MetaMask:', error);
-                alert('❌ Erreur lors de la connexion à MetaMask');
-            }
-        }
-
-        async function connectCoinbase() {
-            if (!window.ethereum || !window.ethereum.isCoinbaseWallet) {
-                alert('❌ Coinbase Wallet non détecté. Installez Coinbase Wallet pour continuer.');
-                window.open('https://www.coinbase.com/wallet', '_blank');
-                return;
-            }
-
-            try {
-                const accounts = await window.ethereum.request({
-                    method: 'eth_requestAccounts'
-                });
-
-                state.wallet.provider = new ethers.providers.Web3Provider(window.ethereum);
-                state.wallet.signer = state.wallet.provider.getSigner();
-                state.wallet.address = accounts[0];
-                state.wallet.connected = true;
-                state.wallet.type = 'Coinbase';
-
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                state.wallet.chainId = chainId;
-
-                const balance = await state.wallet.provider.getBalance(state.wallet.address);
-                state.wallet.balance = ethers.utils.formatEther(balance);
-
-                updateWalletDisplay();
-
-                document.getElementById('coinbase-btn').className = 'px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all flex items-center gap-2';
-                document.getElementById('coinbase-text').textContent = `${state.wallet.address.slice(0, 6)}...${state.wallet.address.slice(-4)}`;
-
-                console.log('✅ Coinbase Wallet connecté:', state.wallet.address);
-
-                window.ethereum.on('accountsChanged', handleAccountsChanged);
-                window.ethereum.on('chainChanged', handleChainChanged);
-
-            } catch (error) {
-                console.error('❌ Erreur connexion Coinbase Wallet:', error);
-                alert('❌ Erreur lors de la connexion à Coinbase Wallet');
-            }
-        }
-
-        function updateWalletDisplay() {
-            const walletInfo = document.getElementById('wallet-info');
-            walletInfo.classList.remove('hidden');
-
-            document.getElementById('wallet-type').textContent = state.wallet.type || '--';
-            document.getElementById('wallet-address').textContent = state.wallet.address;
-            document.getElementById('wallet-network').textContent = NETWORKS[state.wallet.chainId] || 'Réseau inconnu';
-
-            const networkSymbol = state.wallet.chainId === '0x38' ? 'BNB' : 'ETH';
-            document.getElementById('wallet-balance').textContent = `${parseFloat(state.wallet.balance).toFixed(4)} ${networkSymbol}`;
-        }
-
-        async function handleAccountsChanged(accounts) {
-            if (accounts.length === 0) {
-                disconnectWallet();
-            } else {
-                state.wallet.address = accounts[0];
-                const balance = await state.wallet.provider.getBalance(state.wallet.address);
-                state.wallet.balance = ethers.utils.formatEther(balance);
-                updateWalletDisplay();
-
-                const btnId = state.wallet.type === 'MetaMask' ? 'metamask-text' : 'coinbase-text';
-                document.getElementById(btnId).textContent = `${state.wallet.address.slice(0, 6)}...${state.wallet.address.slice(-4)}`;
-            }
-        }
-
-        function handleChainChanged() {
-            window.location.reload();
-        }
-
-        function disconnectWallet() {
-            state.wallet.connected = false;
-            state.wallet.address = null;
-            state.wallet.balance = '0';
-            state.wallet.chainId = null;
-            state.wallet.type = null;
-            document.getElementById('wallet-info').classList.add('hidden');
-
-            document.getElementById('metamask-btn').className = 'px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 rounded-lg font-semibold transition-all flex items-center gap-2';
-            document.getElementById('metamask-text').textContent = 'MetaMask';
-
-            document.getElementById('coinbase-btn').className = 'px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg font-semibold transition-all flex items-center gap-2';
-            document.getElementById('coinbase-text').textContent = 'Coinbase';
-        }
 
         function initChart() {
             const ctx = document.getElementById('priceChart');
@@ -646,3 +467,162 @@
 
             document.getElementById('selected-signal').textContent = signal;
         }
+
+        function simulateBuy() {
+            if (!state.selected || state.priceHistory.length === 0) {
+                alert('❌ Sélectionnez une crypto');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('sim-amount').value);
+            const price = state.priceHistory[state.priceHistory.length - 1];
+
+            if (amount > state.simulation.balance) {
+                alert('❌ Solde insuffisant');
+                return;
+            }
+
+            if (amount <= 0 || price <= 0) {
+                alert('❌ Montant invalide');
+                return;
+            }
+
+            const quantity = amount / price;
+            state.simulation.balance -= amount;
+
+            state.simulation.positions.push({
+                crypto: state.selected.name,
+                symbol: state.selectedSymbol,
+                price: price,
+                amount: amount,
+                quantity: quantity,
+                time: new Date().toLocaleTimeString('fr-FR')
+            });
+
+            state.simulation.trades.unshift({
+                type: 'buy',
+                crypto: state.selected.name,
+                price: price,
+                amount: amount,
+                quantity: quantity,
+                time: new Date().toLocaleTimeString('fr-FR')
+            });
+
+            updateSimulationUI();
+            alert(`✅ Achat: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
+        }
+
+        function simulateSell() {
+            if (!state.selected || state.priceHistory.length === 0) {
+                alert('❌ Sélectionnez une crypto');
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('sim-amount').value);
+            const price = state.priceHistory[state.priceHistory.length - 1];
+
+            const positions = state.simulation.positions.filter(p => p.symbol === state.selectedSymbol);
+
+            if (positions.length === 0) {
+                alert('❌ Aucune position pour ' + state.selected.name);
+                return;
+            }
+
+            const totalValue = positions.reduce((sum, p) => sum + (p.quantity * price), 0);
+
+            if (amount > totalValue) {
+                alert('❌ Montant supérieur aux positions');
+                return;
+            }
+
+            const quantity = amount / price;
+            state.simulation.balance += amount;
+
+            let remainingQty = quantity;
+            state.simulation.positions = state.simulation.positions.filter(p => {
+                if (p.symbol === state.selectedSymbol && remainingQty > 0) {
+                    if (p.quantity <= remainingQty) {
+                        remainingQty -= p.quantity;
+                        return false;
+                    } else {
+                        p.quantity -= remainingQty;
+                        remainingQty = 0;
+                        return true;
+                    }
+                }
+                return true;
+            });
+
+            state.simulation.trades.unshift({
+                type: 'sell',
+                crypto: state.selected.name,
+                price: price,
+                amount: amount,
+                quantity: quantity,
+                time: new Date().toLocaleTimeString('fr-FR')
+            });
+
+            updateSimulationUI();
+            alert(`✅ Vente: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
+        }
+
+        function updateSimulationUI() {
+            document.getElementById('sim-balance').textContent = state.simulation.balance.toFixed(2);
+            document.getElementById('sim-positions').textContent = state.simulation.positions.length;
+
+            const pnl = state.simulation.balance - state.simulation.initialBalance;
+            const pnlEl = document.getElementById('sim-pnl');
+            pnlEl.textContent = `$${pnl.toFixed(2)}`;
+            pnlEl.className = pnl >= 0 ? 'text-2xl font-bold text-green-400' : 'text-2xl font-bold text-red-400';
+
+            const tradesEl = document.getElementById('sim-trades');
+            if (state.simulation.trades.length === 0) {
+                tradesEl.innerHTML = '<p class="text-sm text-gray-400">Aucune transaction</p>';
+            } else {
+                tradesEl.innerHTML = state.simulation.trades.slice(0, 10).map(t => `
+                    <div class="p-3 bg-slate-700/30 rounded-lg flex justify-between items-center">
+                        <div>
+                            <span class="${t.type === 'buy' ? 'text-green-400' : 'text-red-400'}">
+                                ${t.type === 'buy' ? '🟢 ACHAT' : '🔴 VENTE'}
+                            </span>
+                            <span class="text-gray-300 ml-2">${t.crypto}</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold">$${t.price.toFixed(2)}</p>
+                            <p class="text-xs text-gray-400">${t.time}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterCryptos() {
+            const search = document.getElementById('search-crypto').value.toLowerCase();
+            const rows = document.querySelectorAll('.crypto-row');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        function refreshMarket() {
+            const icon = document.getElementById('refresh-icon');
+            icon.style.animation = 'spin 1s linear infinite';
+            loadCryptoList().then(() => {
+                icon.style.animation = '';
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Crypto Dashboard - Top 100');
+            initChart();
+            loadCryptoList();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (state.ws) state.ws.close();
+        });
+    </script>
+</body>
+</html>
