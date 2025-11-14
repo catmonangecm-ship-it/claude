@@ -6,15 +6,19 @@
     <title>Crypto Trading Dashboard - Top 100</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
             min-height: 100vh;
         }
         .card {
-            background: rgba(30, 41, 59, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .price-up { color: #10b981; }
         .price-down { color: #ef4444; }
@@ -26,7 +30,7 @@
             animation: pulse-glow 2s ease-in-out infinite;
         }
         .crypto-row:hover {
-            background: rgba(59, 130, 246, 0.1);
+            background: #f1f5f9;
             cursor: pointer;
         }
         #loading {
@@ -38,143 +42,185 @@
         }
     </style>
 </head>
-<body class="text-white p-4 md:p-8">
+<body class="text-gray-900 p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
+        <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-                📊 Crypto Dashboard - Top 100
-            </h1>
-            <p class="text-gray-400">Prix en temps réel et analyse technique pour les 100 principales cryptomonnaies</p>
-            <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                <p class="text-sm text-yellow-200">
-                    ⚠️ <strong>Mode Éducatif:</strong> Application pédagogique uniquement. Aucune transaction réelle possible.
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                        📊 Crypto Dashboard - Top 100
+                    </h1>
+                    <p class="text-gray-600">Prix en temps réel et analyse technique pour les 100 principales cryptomonnaies</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="connectMetaMask()" id="metamask-btn" class="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg font-semibold transition-all flex items-center gap-2 shadow-md">
+                        <span>🦊</span>
+                        <span id="metamask-text">MetaMask</span>
+                    </button>
+                    <button onclick="connectCoinbase()" id="coinbase-btn" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 shadow-md">
+                        <span>💼</span>
+                        <span id="coinbase-text">Coinbase</span>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    ⚠️ <strong>Mode Éducatif:</strong> Application pédagogique uniquement. Connexion wallet pour voir vos soldes uniquement.
                 </p>
             </div>
         </div>
 
+        <!-- Wallet Info -->
+        <div id="wallet-info" class="card rounded-2xl p-6 mb-8 hidden">
+            <h3 class="text-xl font-bold mb-4 text-gray-900">👛 Informations Wallet</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Type</p>
+                    <p class="text-lg font-bold text-gray-900" id="wallet-type">--</p>
+                </div>
+                <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Adresse</p>
+                    <p class="text-sm font-mono text-gray-900" id="wallet-address">--</p>
+                </div>
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Réseau</p>
+                    <p class="text-lg font-bold text-gray-900" id="wallet-network">--</p>
+                </div>
+                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Solde</p>
+                    <p class="text-lg font-bold text-gray-900" id="wallet-balance">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="card rounded-2xl p-6 lg:col-span-2">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-2xl font-bold">Crypto sélectionnée</h2>
+                    <h2 class="text-2xl font-bold text-gray-900">Crypto sélectionnée</h2>
                     <span id="selected-status" class="pulse-glow">🔴</span>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm text-gray-400 mb-2">Choisir une crypto</label>
-                    <select id="crypto-select" onchange="changeCrypto()" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-400">
+                    <label class="block text-sm text-gray-600 mb-2">Choisir une crypto</label>
+                    <select id="crypto-select" onchange="changeCrypto()" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 text-gray-900">
                         <option value="">Chargement...</option>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <p class="text-gray-400 text-sm">Prix actuel</p>
-                        <p class="text-3xl font-bold" id="selected-price">$--</p>
+                        <p class="text-gray-600 text-sm">Prix actuel</p>
+                        <p class="text-3xl font-bold text-gray-900" id="selected-price">$--</p>
                     </div>
                     <div>
-                        <p class="text-gray-400 text-sm">Variation 24h</p>
+                        <p class="text-gray-600 text-sm">Variation 24h</p>
                         <p class="text-2xl font-bold" id="selected-change">--</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="p-3 bg-slate-700/30 rounded-lg">
-                        <p class="text-gray-400 text-xs">High 24h</p>
-                        <p class="font-semibold" id="selected-high">$--</p>
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p class="text-gray-600 text-xs">High 24h</p>
+                        <p class="font-semibold text-gray-900" id="selected-high">$--</p>
                     </div>
-                    <div class="p-3 bg-slate-700/30 rounded-lg">
-                        <p class="text-gray-400 text-xs">Low 24h</p>
-                        <p class="font-semibold" id="selected-low">$--</p>
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p class="text-gray-600 text-xs">Low 24h</p>
+                        <p class="font-semibold text-gray-900" id="selected-low">$--</p>
                     </div>
-                    <div class="p-3 bg-slate-700/30 rounded-lg">
-                        <p class="text-gray-400 text-xs">Volume 24h</p>
-                        <p class="font-semibold" id="selected-volume">--</p>
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p class="text-gray-600 text-xs">Volume 24h</p>
+                        <p class="font-semibold text-gray-900" id="selected-volume">--</p>
                     </div>
                 </div>
             </div>
 
             <div class="card rounded-2xl p-6">
-                <h3 class="text-xl font-bold mb-4">🔬 Indicateurs Techniques</h3>
+                <h3 class="text-xl font-bold mb-4 text-gray-900">🔬 Indicateurs Techniques</h3>
                 <div class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300 text-sm">RSI (14)</span>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-gray-700 text-sm">RSI (14)</span>
                         <span class="font-bold" id="selected-rsi">--</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300 text-sm">EMA 20</span>
-                        <span class="font-bold" id="selected-ema20">$--</span>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-gray-700 text-sm">EMA 20</span>
+                        <span class="font-bold text-gray-900" id="selected-ema20">$--</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300 text-sm">EMA 50</span>
-                        <span class="font-bold" id="selected-ema50">$--</span>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-gray-700 text-sm">EMA 50</span>
+                        <span class="font-bold text-gray-900" id="selected-ema50">$--</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-                        <span class="text-gray-300 text-sm">Signal</span>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-gray-700 text-sm">Signal</span>
                         <span class="font-bold" id="selected-signal">--</span>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Chart -->
         <div class="card rounded-2xl p-6 mb-8">
-            <h3 class="text-xl font-bold mb-4">📈 Graphique de Prix</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900">📈 Graphique de Prix</h3>
             <canvas id="priceChart"></canvas>
         </div>
 
+        <!-- Simulator -->
         <div class="card rounded-2xl p-6 mb-8">
-            <h3 class="text-xl font-bold mb-4">🎮 Simulateur de Trading</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900">🎮 Simulateur de Trading</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Capital Virtuel</p>
-                    <p class="text-2xl font-bold text-green-400">$<span id="sim-balance">10000</span></p>
+                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Capital Virtuel</p>
+                    <p class="text-2xl font-bold text-green-600">$<span id="sim-balance">10000</span></p>
                 </div>
-                <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Profit/Perte</p>
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Profit/Perte</p>
                     <p class="text-2xl font-bold" id="sim-pnl">$0.00</p>
                 </div>
-                <div class="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                    <p class="text-sm text-gray-400 mb-1">Positions</p>
-                    <p class="text-2xl font-bold" id="sim-positions">0</p>
+                <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Positions</p>
+                    <p class="text-2xl font-bold text-gray-900" id="sim-positions">0</p>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm text-gray-400 mb-2">Montant ($)</label>
-                    <input type="number" id="sim-amount" value="100" min="1" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-400">
+                    <label class="block text-sm text-gray-600 mb-2">Montant ($)</label>
+                    <input type="number" id="sim-amount" value="100" min="1" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 text-gray-900">
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="simulateBuy()" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all">
+                    <button onclick="simulateBuy()" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all shadow-md">
                         🟢 Acheter
                     </button>
-                    <button onclick="simulateSell()" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-all">
+                    <button onclick="simulateSell()" class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all shadow-md">
                         🔴 Vendre
                     </button>
                 </div>
             </div>
             <div id="sim-trades" class="mt-6 space-y-2">
-                <p class="text-sm text-gray-400">Aucune transaction</p>
+                <p class="text-sm text-gray-500">Aucune transaction</p>
             </div>
         </div>
 
+        <!-- Top 100 Table -->
         <div class="card rounded-2xl p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-bold">💰 Top 100 Cryptomonnaies</h3>
+                <h3 class="text-xl font-bold text-gray-900">💰 Top 100 Cryptomonnaies</h3>
                 <div class="flex gap-2 items-center">
-                    <input type="text" id="search-crypto" placeholder="Rechercher..." onkeyup="filterCryptos()" class="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-400">
-                    <button onclick="refreshMarket()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-all">
+                    <input type="text" id="search-crypto" placeholder="Rechercher..." onkeyup="filterCryptos()" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-gray-900">
+                    <button onclick="refreshMarket()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-all shadow-md">
                         <span id="refresh-icon">🔄</span>
                     </button>
                 </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="border-b border-slate-700">
-                        <tr class="text-left text-gray-400">
-                            <th class="pb-3 pr-4">#</th>
-                            <th class="pb-3 pr-4">Nom</th>
-                            <th class="pb-3 pr-4 text-right">Prix</th>
-                            <th class="pb-3 pr-4 text-right">24h %</th>
-                            <th class="pb-3 text-right">Volume 24h</th>
+                    <thead class="border-b-2 border-gray-200">
+                        <tr class="text-left text-gray-600">
+                            <th class="pb-3 pr-4 font-semibold">#</th>
+                            <th class="pb-3 pr-4 font-semibold">Nom</th>
+                            <th class="pb-3 pr-4 text-right font-semibold">Prix</th>
+                            <th class="pb-3 pr-4 text-right font-semibold">24h %</th>
+                            <th class="pb-3 text-right font-semibold">Volume 24h</th>
                         </tr>
                     </thead>
                     <tbody id="crypto-table">
@@ -202,10 +248,152 @@
                 initialBalance: 10000,
                 positions: [],
                 trades: []
+            },
+            wallet: {
+                connected: false,
+                address: null,
+                balance: '0',
+                chainId: null,
+                provider: null,
+                signer: null,
+                type: null
             }
         };
 
         let priceChart = null;
+
+        const NETWORKS = {
+            '0x1': 'Ethereum Mainnet',
+            '0x38': 'BSC Mainnet',
+            '0x89': 'Polygon',
+            '0xa86a': 'Avalanche',
+            '0xfa': 'Fantom'
+        };
+
+        async function connectMetaMask() {
+            if (!window.ethereum) {
+                alert('❌ MetaMask non détecté. Installez MetaMask pour continuer.');
+                window.open('https://metamask.io/download/', '_blank');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                state.wallet.provider = new ethers.providers.Web3Provider(window.ethereum);
+                state.wallet.signer = state.wallet.provider.getSigner();
+                state.wallet.address = accounts[0];
+                state.wallet.connected = true;
+                state.wallet.type = 'MetaMask';
+
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                state.wallet.chainId = chainId;
+
+                const balance = await state.wallet.provider.getBalance(state.wallet.address);
+                state.wallet.balance = ethers.utils.formatEther(balance);
+
+                updateWalletDisplay();
+
+                document.getElementById('metamask-btn').className = 'px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 shadow-md';
+                document.getElementById('metamask-text').textContent = `${state.wallet.address.slice(0, 6)}...${state.wallet.address.slice(-4)}`;
+
+                console.log('✅ MetaMask connecté:', state.wallet.address);
+
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', handleChainChanged);
+
+            } catch (error) {
+                console.error('❌ Erreur connexion MetaMask:', error);
+                alert('❌ Erreur lors de la connexion à MetaMask');
+            }
+        }
+
+        async function connectCoinbase() {
+            if (!window.ethereum || !window.ethereum.isCoinbaseWallet) {
+                alert('❌ Coinbase Wallet non détecté. Installez Coinbase Wallet pour continuer.');
+                window.open('https://www.coinbase.com/wallet', '_blank');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                state.wallet.provider = new ethers.providers.Web3Provider(window.ethereum);
+                state.wallet.signer = state.wallet.provider.getSigner();
+                state.wallet.address = accounts[0];
+                state.wallet.connected = true;
+                state.wallet.type = 'Coinbase';
+
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                state.wallet.chainId = chainId;
+
+                const balance = await state.wallet.provider.getBalance(state.wallet.address);
+                state.wallet.balance = ethers.utils.formatEther(balance);
+
+                updateWalletDisplay();
+
+                document.getElementById('coinbase-btn').className = 'px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 shadow-md';
+                document.getElementById('coinbase-text').textContent = `${state.wallet.address.slice(0, 6)}...${state.wallet.address.slice(-4)}`;
+
+                console.log('✅ Coinbase Wallet connecté:', state.wallet.address);
+
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', handleChainChanged);
+
+            } catch (error) {
+                console.error('❌ Erreur connexion Coinbase Wallet:', error);
+                alert('❌ Erreur lors de la connexion à Coinbase Wallet');
+            }
+        }
+
+        function updateWalletDisplay() {
+            const walletInfo = document.getElementById('wallet-info');
+            walletInfo.classList.remove('hidden');
+
+            document.getElementById('wallet-type').textContent = state.wallet.type || '--';
+            document.getElementById('wallet-address').textContent = state.wallet.address;
+            document.getElementById('wallet-network').textContent = NETWORKS[state.wallet.chainId] || 'Réseau inconnu';
+
+            const networkSymbol = state.wallet.chainId === '0x38' ? 'BNB' : 'ETH';
+            document.getElementById('wallet-balance').textContent = `${parseFloat(state.wallet.balance).toFixed(4)} ${networkSymbol}`;
+        }
+
+        async function handleAccountsChanged(accounts) {
+            if (accounts.length === 0) {
+                disconnectWallet();
+            } else {
+                state.wallet.address = accounts[0];
+                const balance = await state.wallet.provider.getBalance(state.wallet.address);
+                state.wallet.balance = ethers.utils.formatEther(balance);
+                updateWalletDisplay();
+
+                const btnId = state.wallet.type === 'MetaMask' ? 'metamask-text' : 'coinbase-text';
+                document.getElementById(btnId).textContent = `${state.wallet.address.slice(0, 6)}...${state.wallet.address.slice(-4)}`;
+            }
+        }
+
+        function handleChainChanged() {
+            window.location.reload();
+        }
+
+        function disconnectWallet() {
+            state.wallet.connected = false;
+            state.wallet.address = null;
+            state.wallet.balance = '0';
+            state.wallet.chainId = null;
+            state.wallet.type = null;
+            document.getElementById('wallet-info').classList.add('hidden');
+
+            document.getElementById('metamask-btn').className = 'px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-lg font-semibold transition-all flex items-center gap-2 shadow-md';
+            document.getElementById('metamask-text').textContent = 'MetaMask';
+
+            document.getElementById('coinbase-btn').className = 'px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 shadow-md';
+            document.getElementById('coinbase-text').textContent = 'Coinbase';
+        }
 
         function initChart() {
             const ctx = document.getElementById('priceChart');
@@ -231,12 +419,12 @@
                     },
                     scales: {
                         x: {
-                            ticks: { color: '#94a3b8' },
-                            grid: { color: '#334155' }
+                            ticks: { color: '#6b7280' },
+                            grid: { color: '#e5e7eb' }
                         },
                         y: {
-                            ticks: { color: '#94a3b8' },
-                            grid: { color: '#334155' }
+                            ticks: { color: '#6b7280' },
+                            grid: { color: '#e5e7eb' }
                         }
                     }
                 }
@@ -272,7 +460,7 @@
             } catch (error) {
                 console.error('Erreur chargement:', error);
                 document.getElementById('crypto-table').innerHTML = `
-                    <tr><td colspan="5" class="py-8 text-center text-red-400">
+                    <tr><td colspan="5" class="py-8 text-center text-red-500">
                         ❌ Erreur de chargement. <button onclick="loadCryptoList()" class="underline">Réessayer</button>
                     </td></tr>`;
             }
@@ -291,12 +479,12 @@
                 const changeClass = c.change >= 0 ? 'price-up' : 'price-down';
                 const changeIcon = c.change >= 0 ? '▲' : '▼';
                 return `
-                    <tr class="crypto-row border-b border-slate-800" onclick="selectCrypto('${c.symbol}')">
-                        <td class="py-3 pr-4 text-gray-400">${i + 1}</td>
-                        <td class="py-3 pr-4 font-semibold">${c.name}</td>
-                        <td class="py-3 pr-4 text-right">$${c.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: c.price < 1 ? 6 : 2 })}</td>
+                    <tr class="crypto-row border-b border-gray-200" onclick="selectCrypto('${c.symbol}')">
+                        <td class="py-3 pr-4 text-gray-500">${i + 1}</td>
+                        <td class="py-3 pr-4 font-semibold text-gray-900">${c.name}</td>
+                        <td class="py-3 pr-4 text-right text-gray-900">$${c.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: c.price < 1 ? 6 : 2 })}</td>
                         <td class="py-3 pr-4 text-right ${changeClass} font-semibold">${changeIcon} ${Math.abs(c.change).toFixed(2)}%</td>
-                        <td class="py-3 text-right text-gray-400">$${(c.volume / 1000000).toFixed(2)}M</td>
+                        <td class="py-3 text-right text-gray-600">$${(c.volume / 1000000).toFixed(2)}M</td>
                     </tr>
                 `;
             }).join('');
@@ -446,11 +634,11 @@
             rsiEl.textContent = rsi.toFixed(2);
 
             if (rsi < 30) {
-                rsiEl.className = 'font-bold text-green-400';
+                rsiEl.className = 'font-bold text-green-600';
             } else if (rsi > 70) {
-                rsiEl.className = 'font-bold text-red-400';
+                rsiEl.className = 'font-bold text-red-600';
             } else {
-                rsiEl.className = 'font-bold text-yellow-400';
+                rsiEl.className = 'font-bold text-yellow-600';
             }
 
             document.getElementById('selected-ema20').textContent = `$${ema20.toFixed(2)}`;
@@ -509,7 +697,7 @@
             });
 
             updateSimulationUI();
-            alert(`✅ Achat: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
+            alert(`✅ Achat simulé: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
         }
 
         function simulateSell() {
@@ -563,7 +751,7 @@
             });
 
             updateSimulationUI();
-            alert(`✅ Vente: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
+            alert(`✅ Vente simulée: ${quantity.toFixed(8)} ${state.selected.name} à $${price.toFixed(2)}`);
         }
 
         function updateSimulationUI() {
@@ -573,23 +761,23 @@
             const pnl = state.simulation.balance - state.simulation.initialBalance;
             const pnlEl = document.getElementById('sim-pnl');
             pnlEl.textContent = `$${pnl.toFixed(2)}`;
-            pnlEl.className = pnl >= 0 ? 'text-2xl font-bold text-green-400' : 'text-2xl font-bold text-red-400';
+            pnlEl.className = pnl >= 0 ? 'text-2xl font-bold text-green-600' : 'text-2xl font-bold text-red-600';
 
             const tradesEl = document.getElementById('sim-trades');
             if (state.simulation.trades.length === 0) {
-                tradesEl.innerHTML = '<p class="text-sm text-gray-400">Aucune transaction</p>';
+                tradesEl.innerHTML = '<p class="text-sm text-gray-500">Aucune transaction</p>';
             } else {
                 tradesEl.innerHTML = state.simulation.trades.slice(0, 10).map(t => `
-                    <div class="p-3 bg-slate-700/30 rounded-lg flex justify-between items-center">
+                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center">
                         <div>
-                            <span class="${t.type === 'buy' ? 'text-green-400' : 'text-red-400'}">
+                            <span class="${t.type === 'buy' ? 'text-green-600' : 'text-red-600'}">
                                 ${t.type === 'buy' ? '🟢 ACHAT' : '🔴 VENTE'}
                             </span>
-                            <span class="text-gray-300 ml-2">${t.crypto}</span>
+                            <span class="text-gray-700 ml-2">${t.crypto}</span>
                         </div>
                         <div class="text-right">
-                            <p class="font-semibold">$${t.price.toFixed(2)}</p>
-                            <p class="text-xs text-gray-400">${t.time}</p>
+                            <p class="font-semibold text-gray-900">$${t.price.toFixed(2)}</p>
+                            <p class="text-xs text-gray-500">${t.time}</p>
                         </div>
                     </div>
                 `).join('');
@@ -618,6 +806,10 @@
             console.log('🚀 Crypto Dashboard - Top 100');
             initChart();
             loadCryptoList();
+
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                connectMetaMask();
+            }
         });
 
         window.addEventListener('beforeunload', () => {
@@ -626,3 +818,6 @@
     </script>
 </body>
 </html>
+claude/donne-le-nouveau-01PGR1jshVvfCTTy9e8dqniQ
+
+Répondre...
